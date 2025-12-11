@@ -1,0 +1,248 @@
+######################################################################################################
+#                                                                                                    #
+#  Assignment: Project on Data Visualisation (R Shiny Web App)                                       #
+#  ID: u3170205                                                                                      #
+#  Name: Chernor Bah                                                                                 #
+#  Project Title: An Analysis of Australia’s Fossil Fuel Exports and Renewable Energy Transition     #
+#  Start Date: 18/10/2025                                                                            #
+#                                                                                                    #
+#  Description: This Shiny app allows interactive exploration of Australia's energy production,      #
+#               renewable growth, fossil vs renewable energy trends, regional fuel mixes, and        #
+#               forecasts. Users can explore multiple tabs with presentation-ready plots.            #
+#                                                                                                    #
+#  Dataset sources:  https://www.energy.gov.au/publications/australian-energy-update-2025            #
+#                                                                                                    #
+######################################################################################################
+
+# Load required libraries
+library(shiny)
+library(tidyverse)
+library(plotly)
+
+#--------------------------------------------------------
+# Import datasets
+#--------------------------------------------------------
+fuelmix_2024        <- read_csv("Datasets/generation_fuelmix.csv")
+energy_consumption  <- read_csv("Datasets/energy_consumption.csv")
+energy_mix_2023_24  <- read_csv("Datasets/energy_mix_2023_24.csv")
+energy_production   <- read_csv("Datasets/energy_production.csv")
+import_export       <- read_csv("Datasets/Import_Export.csv")
+renewables          <- read_csv("Datasets/renewables.csv")
+
+#--------------------------------------------------------
+# Data cleaning and preprocessing
+#--------------------------------------------------------
+fuelmix_2024 <- fuelmix_2024 %>%
+    rename(FuelType = `Fuel Type`)
+
+energy_production <- energy_production %>%
+    mutate(Year = as.numeric(Year))
+
+import_export <- import_export %>%
+    mutate(Year = as.numeric(Year))
+
+renewables <- renewables %>%
+    mutate(Year = as.numeric(Year))
+
+#--------------------------------------------------------
+# Shiny UI
+#--------------------------------------------------------
+ui <- fluidPage(
+    titlePanel("Australia's Energy Analysis"),
+    tabsetPanel(
+        tabPanel("Production Trends",
+                 plotlyOutput("prodTrendPlot")
+        ),
+        tabPanel("Renewable Growth",
+                 plotlyOutput("renewablesPlot")
+        ),
+        tabPanel("Fossil vs Renewable",
+                 plotlyOutput("fossilRenewPlot")
+        ),
+        tabPanel("Fuel Mix",
+                 selectInput("region_select", "Select Region:",
+                             choices = unique(fuelmix_2024$Region),
+                             selected = "NSW"),
+                 plotlyOutput("fuelmixPlot")
+        ),
+        tabPanel("Total Renewable By Region",
+                 plotlyOutput("fuelmixOverviewPlot")
+        ),
+        tabPanel("Import/Export Forecast",
+                 plotlyOutput("importExportPlot")
+        )
+    )
+)
+
+#--------------------------------------------------------
+# Shiny Server
+#--------------------------------------------------------
+server <- function(input, output) {
+    
+    # Energy Production Trend plot
+    output$prodTrendPlot <- renderPlotly({
+        fuel_colors <- c(
+            "Black coal"  = "#000000",
+            "Brown coal"  = "#D2691E",
+            "Oil and LPG" = "#E41A1C",
+            "Natural gas" = "#1E90FF",
+            "Renewables"  = "#00C853"
+        )
+        p <- ggplot(energy_production, aes(x = Year, y = Energy_PJ, color = FuelType)) +
+            geom_line(linewidth = 1.3) +
+            scale_color_manual(values = fuel_colors) +
+            scale_x_continuous(breaks = seq(1985, 2025, 5)) +
+            labs(title = "Energy Production by Fuel Type", x = "", y = "Energy (PJ)", color = "") +
+            theme_minimal(base_size = 13) +
+            theme(
+                panel.grid = element_blank(),
+                axis.line = element_line(color = "grey40"),
+                axis.ticks = element_line(color = "grey40"),
+                axis.title.x = element_text(hjust = 0, vjust = -1),
+                legend.position = "bottom"
+            )
+        ggplotly(p)
+    })
+    
+    # Renewable Growth plot
+    output$renewablesPlot <- renderPlotly({
+        renewable_colors <- c(
+            "Hydro"     = "#0077C8",
+            "Wind"      = "#00BFC4",
+            "Solar"     = "#FFD300",
+            "Bioenergy" = "#00C853"
+        )
+        p <- ggplot(renewables, aes(x = Year, y = Energy_PJ, color = Source)) +
+            geom_line(linewidth = 1.3) +
+            scale_color_manual(values = renewable_colors) +
+            scale_x_continuous(breaks = seq(2000, 2025, 5)) +
+            scale_y_continuous(labels = scales::comma) +
+            labs(title = "Renewable Electricity Generation", x = "", y = "Energy (PJ)", color = "") +
+            theme_minimal(base_size = 13) +
+            theme(
+                panel.grid = element_blank(),
+                axis.line = element_line(color = "grey40"),
+                axis.ticks = element_line(color = "grey40"),
+                axis.title.x = element_text(hjust = 0, vjust = -1),
+                legend.position = "bottom"
+            )
+        ggplotly(p)
+    })
+    
+    # Fossil vs Renewable Energy plot
+    output$fossilRenewPlot <- renderPlotly({
+        energy_grouped <- energy_production %>%
+            mutate(Category = ifelse(FuelType == "Renewables", "Renewables", "Fossil Fuels")) %>%
+            group_by(Year, Category) %>%
+            summarise(Total_PJ = sum(Energy_PJ), .groups = "drop")
+        
+        category_colors <- c(
+            "Fossil Fuels" = "#E41A1C",
+            "Renewables"   = "#00C853"
+        )
+        
+        p <- ggplot(energy_grouped, aes(x = Year, y = Total_PJ, fill = Category)) +
+            geom_area(alpha = 0.9, color = "white", linewidth = 0.3) +
+            scale_fill_manual(values = category_colors) +
+            scale_x_continuous(breaks = seq(1985, 2025, 5)) +
+            labs(title = "Renewables vs Fossil Fuels", x = "", y = "Energy (PJ)", fill = "") +
+            theme_minimal(base_size = 13) +
+            theme(
+                panel.grid = element_blank(),
+                axis.line = element_line(color = "grey40"),
+                axis.ticks = element_line(color = "grey40"),
+                axis.title.x = element_text(hjust = 0, vjust = -1),
+                legend.position = "bottom"
+            )
+        ggplotly(p)
+    })
+    
+    # Fuel Mix 2024 plot by selected region
+    output$fuelmixPlot <- renderPlotly({
+        data <- fuelmix_2024 %>% filter(Region == input$region_select)
+        fuel_colors <- c(
+            "Coal"             = "#B22222",
+            "Natural gas"      = "#1E90FF",
+            "Oil"              = "#555555",
+            "Hydro"            = "#00BFC4",
+            "Other renewables" = "#00C853"
+        )
+        p <- ggplot(data, aes(x = FuelType, y = Percentage, fill = FuelType)) +
+            geom_col(width = 0.7) +
+            scale_fill_manual(values = fuel_colors) +
+            labs(title = paste("Electricity Generation by Fuel Type:", input$region_select),
+                 x = "", y = "Percentage (%)", fill = "") +
+            theme_minimal(base_size = 13) +
+            theme(
+                panel.grid = element_blank(),
+                axis.line = element_line(color = "grey40"),
+                axis.ticks = element_line(color = "grey40"),
+                axis.title.x = element_text(hjust = 0, vjust = -1),
+                legend.position = "bottom"
+            )
+        ggplotly(p)
+    })
+    
+    # Fuel Mix Overview plot
+    output$fuelmixOverviewPlot <- renderPlotly({
+        data <- fuelmix_2024 %>%
+            group_by(Region) %>%
+            summarise(TotalRenewables = sum(Percentage[FuelType %in% c("Hydro", "Other renewables", "Solar", "Wind", "Bioenergy")]))
+        
+        p <- ggplot(data, aes(x = reorder(Region, -TotalRenewables), y = TotalRenewables, fill = Region)) +
+            geom_col(show.legend = FALSE) +
+            labs(title = "Renewable Energy Share by Region", x = "", y = "Energy (%)") +
+            theme_minimal(base_size = 13) +
+            theme(
+                panel.grid = element_blank(),
+                axis.line = element_line(color = "grey40"),
+                axis.ticks = element_line(color = "grey40")
+            )
+        ggplotly(p)
+    })
+    
+    # Import/Export Forecast plot
+    output$importExportPlot <- renderPlotly({
+        supply_colors <- c(
+            "Exports"    = "#E41A1C",
+            "Production" = "#00C853"
+        )
+        
+        forecast_data <- import_export %>%
+            filter(Year == 2024) %>%
+            group_by(Supply) %>%
+            summarise(Quantity_PJ = mean(Quantity_PJ), .groups = "drop") %>%
+            mutate(Year = 2024, Year_next = 2027, Quantity_PJ_next = Quantity_PJ * 1.05) %>%
+            pivot_longer(cols = c(Quantity_PJ, Quantity_PJ_next), names_to = "type", values_to = "Quantity_PJ") %>%
+            mutate(Year = ifelse(type == "Quantity_PJ", 2024, 2027)) %>%
+            select(Supply, Year, Quantity_PJ)
+        
+        p <- ggplot(import_export, aes(x = Year, y = Quantity_PJ, color = Supply)) +
+            geom_line(linewidth = 1.3) +
+            geom_line(data = forecast_data, aes(x = Year, y = Quantity_PJ, color = Supply),
+                      linetype = "dashed", linewidth = 1, alpha = 0.7) +
+            geom_vline(xintercept = 2008, linetype = "dotted", color = "blue", linewidth = 0.5) +
+            geom_vline(xintercept = 2020, linetype = "dotted", color = "red", linewidth = 0.5) +
+            annotate("text", x = 2010.2, y = max(import_export$Quantity_PJ) * 1.01,
+                     label = "Global Financial Crisis", hjust = 0, color = "blue", size = 3, fontface = "bold") +
+            annotate("text", x = 2022.1, y = max(import_export$Quantity_PJ) * 1.01,
+                     label = "COVID-19 Pandemic", hjust = 0, color = "red", size = 3, fontface = "bold") +
+            scale_x_continuous(breaks = seq(min(import_export$Year), max(import_export$Year) + 3, 5),
+                               limits = c(min(import_export$Year), 2027)) +
+            scale_color_manual(values = supply_colors) +
+            labs(x = "", y = "Quantity (PJ)", color = "") +
+            theme_minimal(base_size = 13) +
+            theme(
+                panel.grid = element_blank(),
+                axis.line = element_line(color = "grey50"),
+                axis.ticks = element_line(color = "grey50"),
+                axis.title.x = element_text(hjust = 0, vjust = -1)
+            )
+        ggplotly(p)
+    })
+}
+
+#--------------------------------------------------------
+# Run the Shiny app
+#--------------------------------------------------------
+shinyApp(ui, server)

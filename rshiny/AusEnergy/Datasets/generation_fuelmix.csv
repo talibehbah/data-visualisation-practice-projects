@@ -1,0 +1,36 @@
+Fuel Type,Region,Percentage
+Coal,NSW,59.6
+Natural gas,NSW,2.8
+Oil,NSW,0.8
+Hydro,NSW,4
+Other renewables,NSW,32.8
+Coal,VIC,55.8
+Natural gas,VIC,3.3
+Oil,VIC,0.4
+Hydro,VIC,4.8
+Other renewables,VIC,35.7
+Coal,QLD,57.3
+Natural gas,QLD,12.4
+Oil,QLD,1.6
+Hydro,QLD,2
+Other renewables,QLD,26.6
+Coal,WA,16.9
+Natural gas,WA,59.1
+Oil,WA,4.6
+Hydro,WA,0.2
+Other renewables,WA,19.3
+Coal,SA,0
+Natural gas,SA,24.2
+Oil,SA,1.6
+Hydro,SA,0
+Other renewables,SA,74.3
+Coal,TAS,0
+Natural gas,TAS,5.2
+Oil,TAS,0.1
+Hydro,TAS,70.8
+Other renewables,TAS,23.9
+Coal,NT,0
+Natural gas,NT,83
+Oil,NT,9.5
+Hydro,NT,0
+Other renewables,NT,7.5

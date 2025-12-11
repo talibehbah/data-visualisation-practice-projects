@@ -1,0 +1,9 @@
+# System files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# Optional: ignore unrelated desktop files
+desktop.ini
