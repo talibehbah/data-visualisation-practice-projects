@@ -19,7 +19,7 @@ renewable_sources  <- read_csv("Datasets/renewables.csv")
 # Data cleaning and preprocessing
 #--------------------------------------------------------
 gen_fuelmix <- gen_fuelmix %>%
-    rename(FuelType = `Fuel Type`)  # consistent with plotting
+    rename(FuelType = `Fuel Type`)
 
 energy_gen <- energy_gen %>%
     mutate(Year = as.numeric(Year))
@@ -116,7 +116,7 @@ server <- function(input, output) {
             geom_line(linewidth = 1.3) +
             scale_color_manual(values = fuel_colors) +
             scale_x_continuous(breaks = seq(1985, 2025, 5)) +
-            labs(title = "Energy Generation by Fuel Type", x = "", y = "Energy (PJ)", color = "") +
+            labs(title = "Energy Generation by Fuel Type", x = "Year", y = "Energy (PJ)", color = "") +
             theme_minimal(base_size = 13) +
             theme(
                 panel.grid = element_blank(),
@@ -144,7 +144,7 @@ server <- function(input, output) {
             scale_color_manual(values = renewable_colors) +
             scale_x_continuous(breaks = seq(2000, 2025, 5)) +
             scale_y_continuous(labels = scales::comma) +
-            labs(title = "Renewable Electricity Generation", x = "", y = "Energy (PJ)", color = "") +
+            labs(title = "Renewable Electricity Generation", x = "Year", y = "Energy (PJ)", color = "") +
             theme_minimal(base_size = 13) +
             theme(
                 panel.grid = element_blank(),
@@ -171,7 +171,7 @@ server <- function(input, output) {
         p <- ggplot(grouped_data, aes(x = Year, y = Total_Energy, fill = Category)) +
             geom_area(alpha = 0.9, color = "white", linewidth = 0.3) +
             scale_fill_manual(values = category_colors) +
-            labs(title = "Renewables vs Fossil Fuels", x = "", y = "Energy (PJ)", fill = "") +
+            labs(title = "Renewables vs Fossil Fuels", x = "Year", y = "Energy (PJ)", fill = "") +
             theme_minimal(base_size = 13) +
             theme(
                 panel.grid = element_blank(),
@@ -196,7 +196,7 @@ server <- function(input, output) {
             geom_col(width = 0.7) +
             scale_fill_manual(values = fuel_colors) +
             labs(title = paste("Electricity Generation by Fuel Type:", input$region_select),
-                 x = "", y = "Percentage (%)", fill = "") +
+                 x = "Fuel Type", y = "Percentage (%)", fill = "") +
             theme_minimal(base_size = 13) +
             theme(
                 panel.grid = element_blank(),
@@ -214,7 +214,7 @@ server <- function(input, output) {
         
         p <- ggplot(overview_data, aes(x = reorder(Region, -TotalRenewables), y = TotalRenewables, fill = Region)) +
             geom_col(show.legend = FALSE) +
-            labs(title = "Renewable Energy Share by Region", x = "", y = "Energy (%)") +
+            labs(title = "Renewable Energy Share by Region", x = "Region", y = "Energy (%)") +
             theme_minimal(base_size = 13) +
             theme(
                 panel.grid = element_blank(),
@@ -248,7 +248,7 @@ server <- function(input, output) {
                       linetype = "dashed", linewidth = 1, alpha = 0.7) +
             scale_color_manual(values = trade_colors) +
             labs(title = "Energy Import/Export Trends (with Forecast)",
-                 x = "", y = "Quantity (PJ)", color = "") +
+                 x = "Year", y = "Quantity (PJ)", color = "") +
             theme_minimal(base_size = 13) +
             theme(
                 panel.grid = element_blank(),
