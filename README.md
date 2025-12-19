@@ -5,6 +5,7 @@ This repository contains practice projects for **R Shiny** and **Power BI**, wit
 
 ### R Shiny
 - **Australian Energy Dashboard:** Open `rshiny/rshiny.Rproj` in RStudio, then click **Run App**. You may need to install the required packages for the first run.
+- R Shiny App URL - https://talibeh.shinyapps.io/AusEnergy/
 
 ### Power BI
 - **AdventureWorks Practice Reports:** Various reports based on AdventureWorks datasets.
